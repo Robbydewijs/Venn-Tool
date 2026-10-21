@@ -25,6 +25,10 @@ Your board is lost if you clear your browser data (cookies and site data) for th
 
 **Download a backup regularly.** Go to **Export / import**, then **Download backup**. The .json file holds your board and all versions, and **Load backup** brings it back on any device.
 
+## Sources (APA 7)
+
+Each card has its own **Sources** field. Add one reference per line, and put titles or journal names between *asterisks* to make them italic, for example `*Addictive Behaviors, 140*`. The Word export lists the sources under each card and builds an alphabetical **References** list at the end, without duplicates and with a hanging indent.
+
 ## Word export and import
 
 **Export as Word** creates a .docx file:
@@ -32,7 +36,8 @@ Your board is lost if you clear your browser data (cookies and site data) for th
 - Title: your project title
 - Heading 1: each part of the diagram
 - Heading 2: each card
-- Normal text: the card's description
+- Normal text: the card's description, followed by its sources
+- References: every source from every card, alphabetical, on a new page at the end
 
 Word's navigation pane shows this as a table of contents.
 
