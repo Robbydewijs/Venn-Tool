@@ -27,7 +27,7 @@ Your board is lost if you clear your browser data (cookies and site data) for th
 
 ## Sources (APA 7)
 
-Each card has its own **Sources** field. Add one reference per line, and put titles or journal names between *asterisks* to make them italic, for example `*Addictive Behaviors, 140*`. The Word export lists the sources under each card and builds an alphabetical **References** list at the end, without duplicates and with a hanging indent.
+Each card has its own **Sources** field. Add one reference per line, and put titles or journal names between *asterisks* to make them italic, for example `*Addictive Behaviors, 140*`. The Word export collects every source in one alphabetical **References** list at the end, without duplicates and with a hanging indent. When you import a Word file, each reference is linked back to the cards that cite it, by matching the first author and year in the card text, for example (Todorovic et al., 2025).
 
 ## Word export and import
 
@@ -36,7 +36,7 @@ Each card has its own **Sources** field. Add one reference per line, and put tit
 - Title: your project title
 - Heading 1: each part of the diagram
 - Heading 2: each card
-- Normal text: the card's description, followed by its sources
+- Normal text: the card's description
 - References: every source from every card, alphabetical, on a new page at the end
 
 Word's navigation pane shows this as a table of contents.

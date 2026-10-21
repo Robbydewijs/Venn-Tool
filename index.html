@@ -1283,11 +1283,6 @@ ${asMarkdown()}`;
         const lines = c.body.replace(/\r\n?/g, '\n').split('\n');
         while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
         for (const line of lines) body.push(para(line, null));
-        const src = c.sources || [];
-        if (src.length) {
-          body.push(para('Sources', 'VBSourceLabel'));
-          for (const r of src) body.push(`<w:p><w:pPr><w:pStyle w:val="VBSource"/></w:pPr>${runsFromMarkup(r)}</w:p>`);
-        }
       }
     }
     const refs = allReferences();
@@ -1343,6 +1338,18 @@ ${asMarkdown()}`;
     if (!bodyEl) throw new Error('bad_xml');
     const out = {title:null, labels:{}, cards:[], skipped:[]};
     let zone = null, card = null, order = Date.now(), inRefs = false;
+    const refs = [];
+    // Text of a paragraph, with italic runs written as *text*
+    const markupOf = para => {
+      let mk = '';
+      for (const r of para.getElementsByTagNameNS(W, 'r')) {
+        let t = ''; for (const n of r.getElementsByTagNameNS(W, 't')) t += n.textContent;
+        const it = r.getElementsByTagNameNS(W, 'i')[0];
+        const italic = it && wAttr(it, 'val') !== '0' && wAttr(it, 'val') !== 'false';
+        mk += italic && t.trim() ? '*' + t + '*' : t;
+      }
+      return mk.replace(/\*\*/g, '').trim();
+    };
     for (const p of bodyEl.getElementsByTagNameNS(W, 'p')) {
       const ps = p.getElementsByTagNameNS(W, 'pStyle')[0];
       const style = norm(ps ? wAttr(ps, 'val') : '');
@@ -1369,7 +1376,10 @@ ${asMarkdown()}`;
         }
         continue;
       }
-      if (style === 'vbreference' || inRefs && !/^(heading|kop|berschrift|titre)[12]$/.test(style)) continue;
+      if (style === 'vbreference' || inRefs && !/^(heading|kop|berschrift|titre)[12]$/.test(style)) {
+        if (inRefs) { const mk = markupOf(p); if (mk) refs.push(mk); }
+        continue;
+      }
       if (/^(heading|kop|berschrift|titre)1$/.test(style)) {
         card = null;
         inRefs = bm === 'vb_references' || norm(text) === 'references';
@@ -1387,6 +1397,27 @@ ${asMarkdown()}`;
       if (card) card.lines.push(text);
     }
     out.cards = out.cards.map(c => { const lines = c.lines.slice(); while (lines.length && !lines[0].trim()) lines.shift(); while (lines.length && !lines[lines.length - 1].trim()) lines.pop(); return {id:c.id, zone:c.zone, title:c.title, body:lines.join('\n'), sources:c.sources || [], created:c.created, updated:c.updated}; });
+    // Link each reference back to the cards that cite it: first author and year in the card text
+    if (refs.length) {
+      const keyOf = r => {
+        const plain = r.replace(/\*/g, '');
+        const ym = plain.match(/\((\d{4}[a-z]?|n\.d\.)/);
+        if (!ym) return null;
+        const authors = plain.slice(0, ym.index).trim();
+        const first = (authors.includes(',') ? authors.split(',')[0] : authors).replace(/[.\s]+$/, '').trim();
+        return first ? {first, year:ym[1]} : null;
+      };
+      const esc = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const keyed = refs.map(r => ({r, k:keyOf(r)})).filter(x => x.k);
+      for (const c of out.cards) {
+        if (c.sources.length) continue;
+        for (const {r, k} of keyed) {
+          const re = new RegExp(esc(k.first) + '[^)]{0,60}?' + esc(k.year), 'i');
+          if (re.test(c.body)) c.sources.push(r);
+        }
+      }
+      out.refCount = refs.length;
+    }
     return out;
   }
   async function readDocxFile(file){
@@ -1734,7 +1765,7 @@ ${asMarkdown()}`;
       el('dl', {}, [
         ...helpItem('Zone menu', 'Moves the card to another part of the diagram.'),
         ...helpItem('Copy tighten prompt', 'Copies a prompt asking Claude to make your own text more concise. It adds no new facts and keeps your citations. Paste the result back if you like it.'),
-        ...helpItem('Sources (APA 7)', 'Add the references a card relies on, one per line. Put titles or journal names between *asterisks* to make them italic. The Word export lists them under each card and builds an alphabetical References list at the end, without duplicates.'),
+        ...helpItem('Sources (APA 7)', 'Add the references a card relies on, one per line. Put titles or journal names between *asterisks* to make them italic. The Word export collects them in one alphabetical References list at the end, without duplicates. Your full backup keeps track of which card each source belongs to.'),
         ...helpItem('Copy gap check prompt', 'Copies a prompt asking Claude what this card is missing for its ILO. You get questions to answer in your own words, not new text.'),
         ...helpItem('Delete card', 'Tap twice to delete. Empty cards are removed on their own when you close them.'),
         ...helpItem('Done', 'Closes the card. Everything is already saved. Esc also closes it.')
